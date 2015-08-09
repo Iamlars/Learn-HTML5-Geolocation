@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>基于浏览器的HTML5查找地理位置</title>
+    <!-- 百度API -->
+    <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="http://api.map.baidu.com/api?v=1.2" type="text/javascript"></script>
+
+    <script>
+
+        // 通过百度地图逆解析API获取用户当前位置
+
+        ;
+        (function ($){
+
+            var ak = '',
+                    URI = 'http://api.map.baidu.com/geocoder/v2/?';
+
+            function Geo(uid) {
+
+                if (!(this instanceof Geo)) {
+                    return new Geo();
+                }
+
+                ak = uid;
+                this.geo = navigator.geolocation;
+                this.settings = {
+                    enableHighAccuracy:true,
+                    maximumAge:1000
+                };
+
+
+                this.init();
+            }
+
+            Geo.prototype.init = function(){
+
+                var that = this;
+
+                if(that.geo){//浏览器支持geolocation
+                    that.geo.getCurrentPosition(that.done,that.fail,that.settings);
+
+                }else{//浏览器不支持geolocation
+
+                }
+            };
+
+            Geo.prototype.done = function(position){
+                //获得经度纬度
+                var x = position.coords.latitude;
+                var y = position.coords.longitude;
+
+                //Baidu Geocoding API
+                var setting = {
+                    ak: ak,
+                    callback: 'renderReverse',
+                    location: x + "," + y,
+                    output: 'json',
+                    pois: 0
+                };
+
+                $.ajax({
+                    type: "GET",
+                    dataType: "jsonp",
+                    url: URI+ $.param(setting),
+                    success: function (json) {
+                        console.log(json);
+                        if (json == null || typeof (json) == "undefined") {
+                            return;
+                        }
+                        if (json.status != "0") {
+                            return;
+                        }
+
+                        alert(json.province + json.city + json.district + json.street+ json.street_number);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert("[x:" + x + ",y:" + y + "]地址位置获取失败");
+                    }
+                });
+            };
+
+            Geo.prototype.fail = function(error){
+
+                switch(error.code){
+                    case 1:
+                        alert("位置服务被拒绝");
+                        break;
+
+                    case 2:
+                        alert("暂时获取不到位置信息");
+                        break;
+
+                    case 3:
+                        alert("获取信息超时");
+                        break;
+
+                    case 4:
+                        alert("未知错误");
+                        break;
+                }
+            };
+
+            window.Geo = function(){
+                return Geo();
+            };
+
+        }(window.jQuery));
+
+
+
+        window.onload = function(){
+            var uid = 'C93b5178d7a8ebdb830b9b557abce78b';
+            new Geo(uid);
+        }
+
+
+    </script>
+</head>
+<body>
+
+</body>
+</html>
