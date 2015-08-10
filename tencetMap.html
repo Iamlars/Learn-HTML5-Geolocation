@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>腾讯地图定位</title>
+    <style>
+        button{
+            font-size: 3rem;
+        }
+        p{
+            font-size: 2rem;
+            line-height: 2;
+        }
+    </style>
+
+    <script src="http://map.qq.com/api/js?v=2.exp"></script>
+    <script>
+
+        ;
+        (function(){
+
+            function Geo(){
+                if (!(this instanceof Geo)) {
+                    return new Geo();
+                }
+
+                this.geo = navigator.geolocation;
+                this.options = {
+                    enableHighAccuracy: true,
+                    maximumAge: 1000
+                };
+                this.x = 0;
+                this.y = 0;
+                this.LIEWUX = 103.936651;
+                this.LIEWUY = 30.702063;
+                this.address = '火星';
+                this.distance = 9999999999;
+
+                this.init();
+            }
+
+            Geo.prototype.init = function(){
+                if(this.geo){
+                    //浏览器支持geolocation
+                    this.geo.getCurrentPosition(this.done,this.fail,this.options);
+
+                    this.getDistance();
+                    document.querySelector('#J_show').innerHTML =
+                            '你当前所处的位置是：'+this.address+'</br>'+
+                            '经度：'+this.x+'</br>'+
+                            '纬度：'+this.y+'</br>'+
+                            '距离猎巫：'+this.distance+'公里</br>';
+
+                }else{
+                    document.querySelector('#J_show').innerHTML = '你的设备不支持地理定位';
+                }
+            };
+
+            Geo.prototype.done = function(position){
+                var that = this;
+                that.x = position.coords.latitude;
+                that.y = position.coords.longitude;
+                var geocoder = new qq.maps.Geocoder({
+                    complete:function(result){
+                        that.address = result.detail.address;
+                    }
+                });
+
+                var coord = new qq.maps.LatLng(that.x,that.y);
+                geocoder.getAddress(coord);
+
+            };
+
+            Geo.prototype.fail = function(error){
+                switch(error.code){
+                    case 1:
+                        alert("位置服务被拒绝");
+                        break;
+
+                    case 2:
+                        alert("暂时获取不到位置信息");
+                        break;
+
+                    case 3:
+                        alert("获取信息超时");
+                        break;
+
+                    case 4:
+                        alert("未知错误");
+                        break;
+                }
+            };
+
+            Geo.prototype.getDistance = function(){
+                var EARTH_RADIUS = 6378137; //地球半径，单位M
+                var PI = Math.PI;
+                var that = this;
+
+                function getRad(d){
+                    return d * PI/180;
+                }
+
+                function getFlatternDistance(){
+
+                    var f = getRad((that.x + that.LIEWUX)/2);
+                    var g = getRad((that.x - that.LIEWUX)/2);
+                    var l = getRad((that.y + that.LIEWUY)/2);
+
+                    var sg = Math.sin(g);
+                    var sl = Math.sin(l);
+                    var sf = Math.sin(f);
+
+                    var s,c,w,r,d,h1,h2;
+                    var fl = 1/298.257;
+
+                    sg = sg*sg;
+                    sl = sl*sl;
+                    sf = sf*sf;
+
+                    s = sg*(1-sl) + (1-sf)*sl;
+                    c = (1-sg)*(1-sl) + sf*sl;
+
+                    w = Math.atan(Math.sqrt(s/c));
+                    r = Math.sqrt(s*c)/w;
+                    d = 2*w*EARTH_RADIUS;
+                    h1 = (3*r -1)/2/c;
+                    h2 = (3*r +1)/2/s;
+
+                    return d*(1 + fl*(h1*sf*(1-sg) - h2*(1-sf)*sg));
+                }
+
+                this.distance = (getFlatternDistance() / 1000).toFixed(3);
+            };
+
+
+
+            window.Geo = Geo;
+
+        }());
+
+    </script>
+</head>
+<body>
+<button onclick="Geo()">我会告诉你在哪里</button>
+<p id="J_show"></p>
+</body>
+</html>

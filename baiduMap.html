@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>基于浏览器的HTML5查找地理位置</title>
+    <title>百度地图定位</title>
     <!-- 百度API -->
     <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
     <script src="http://api.map.baidu.com/api?v=1.2" type="text/javascript"></script>
@@ -102,9 +102,7 @@
                 }
             };
 
-            window.Geo = function(){
-                return Geo();
-            };
+            window.Geo = Geo;
 
         }(window.jQuery));
 
