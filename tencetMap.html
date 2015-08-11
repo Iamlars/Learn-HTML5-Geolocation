@@ -31,8 +31,8 @@
                 };
                 this.x = 0;
                 this.y = 0;
-                this.LIEWUX = 103.936651;
-                this.LIEWUY = 30.702063;
+                this.LIEWUY = 104.05988620912926;
+                this.LIEWUX = 30.570253443305777;
                 this.address = '火星';
                 this.distance = 9999999999;
 
@@ -42,53 +42,27 @@
             Geo.prototype.init = function(){
                 if(this.geo){
                     //浏览器支持geolocation
-                    this.geo.getCurrentPosition(this.done,this.fail,this.options);
-
-                    this.getDistance();
-                    document.querySelector('#J_show').innerHTML =
-                            '你当前所处的位置是：'+this.address+'</br>'+
-                            '经度：'+this.x+'</br>'+
-                            '纬度：'+this.y+'</br>'+
-                            '距离猎巫：'+this.distance+'公里</br>';
-
+                    this.geo.getCurrentPosition(this.done.bind(this),this.fail,this.options);
                 }else{
                     document.querySelector('#J_show').innerHTML = '你的设备不支持地理定位';
                 }
             };
 
             Geo.prototype.done = function(position){
-                var that = this;
-                that.x = position.coords.latitude;
-                that.y = position.coords.longitude;
-                var geocoder = new qq.maps.Geocoder({
+                var coord = null,geocoder = null;
+                this.x = position.coords.latitude; // 纬度
+                this.y = position.coords.longitude;// 经度
+                this.getDistance();
+              
+                coord = new qq.maps.LatLng(this.x,this.y);
+                geocoder = new qq.maps.Geocoder({
                     complete:function(result){
-                        that.address = result.detail.address;
+                        document.querySelector('#J_show_address').innerHTML =
+                            '你当前所处的位置是：'+result.detail.address;
                     }
                 });
-
-                var coord = new qq.maps.LatLng(that.x,that.y);
                 geocoder.getAddress(coord);
-
-            };
-
-            Geo.prototype.fail = function(error){
-                switch(error.code){
-                    case 1:
-                        alert("位置服务被拒绝");
-                        break;
-
-                    case 2:
-                        alert("暂时获取不到位置信息");
-                        break;
-
-                    case 3:
-                        alert("获取信息超时");
-                        break;
-
-                    case 4:
-                        alert("未知错误");
-                        break;
-                }
+                
             };
 
             Geo.prototype.getDistance = function(){
@@ -100,11 +74,10 @@
                     return d * PI/180;
                 }
 
-                function getFlatternDistance(){
-
-                    var f = getRad((that.x + that.LIEWUX)/2);
-                    var g = getRad((that.x - that.LIEWUX)/2);
-                    var l = getRad((that.y + that.LIEWUY)/2);
+                function getFlatternDistance(lat1,lng1,lat2,lng2){
+                    var f = getRad((lat1 + lat2)/2);
+                    var g = getRad((lat1 - lat2)/2);
+                    var l = getRad((lng1 - lng2)/2);
 
                     var sg = Math.sin(g);
                     var sl = Math.sin(l);
@@ -129,19 +102,44 @@
                     return d*(1 + fl*(h1*sf*(1-sg) - h2*(1-sf)*sg));
                 }
 
-                this.distance = (getFlatternDistance() / 1000).toFixed(3);
+    
+                that.distance = (getFlatternDistance(that.y,that.x,that.LIEWUY,that.LIEWUX) / 1000).toFixed(3);
+                document.querySelector('#J_show_other').innerHTML =
+                            '经度：'+that.y+'</br>'+
+                            '纬度：'+that.x+'</br>'+
+                            '距离猎巫：'+that.distance+'公里</br>';
             };
+          
+            Geo.prototype.fail = function(error){
+                switch(error.code){
+                    case 1:
+                        alert("位置服务被拒绝");
+                        break;
 
+                    case 2:
+                        alert("暂时获取不到位置信息");
+                        break;
 
+                    case 3:
+                        alert("获取信息超时");
+                        break;
+
+                    case 4:
+                        alert("未知错误");
+                        break;
+                }
+            };
 
             window.Geo = Geo;
 
         }());
+       
 
     </script>
 </head>
 <body>
 <button onclick="Geo()">我会告诉你在哪里</button>
-<p id="J_show"></p>
+<p id="J_show_address"></p>
+<p id="J_show_other"></p>
 </body>
 </html>
